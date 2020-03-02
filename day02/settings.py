@@ -131,6 +131,15 @@ REST_FRAMEWORK = {
     # 'UNAUTHENTICATED_USER': lambda: '匿名用户',  # request.user=匿名用户
     'UNAUTHENTICATED_USER': None,  # request.user=None
     'UNAUTHENTICATED_TOKEN': None,  # request.auth=None
+
     # 全局权限配置
-    'DEFAULT_PERMISSION_CLASSES': ['api.utils.permission.SvipPermission', ]
+    'DEFAULT_PERMISSION_CLASSES': ['api.utils.permission.SvipPermission', ],
+
+    # 全局节流配置（访问频率）
+    'DEFAULT_THROTTLE_CLASSES': ['api.utils.throttle.UserThrottles'],
+    # 访问频率：1分钟三次
+    'DEFAULT_THROTTLE_RATES': {
+        'Luffy': '3/m',
+        'LuffyUser': '10/m'
+    }
 }

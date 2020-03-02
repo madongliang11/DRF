@@ -6,6 +6,7 @@ import hashlib
 import time
 
 from api.utils.permission import SvipPermission, MyPermission1
+from api.utils.throttle import VisitThrottles
 
 ORDER_DIC = {
     1: {
@@ -21,7 +22,6 @@ ORDER_DIC = {
         'content': '........'
     }
 }
-VISIT_RECORD = {}
 
 
 def md5(user):
@@ -31,54 +31,17 @@ def md5(user):
     return m.hexdigest()
 
 
-class VisitThrottles(object):
-
-    def __init__(self):
-        self.history = None
-
-    def allow_request(self, request, view):
-        '''
-        60s内只能访问3次
-        1、获取用户ip
-        :param request:
-        :param view:
-        :return:
-        '''
-        # 如果返回False，表示访问频率太高，被限制
-        # 如果返回True，表示可以继续访问
-        remote_addr = request.META.get('REMOTE_ADDR')
-        ctime = time.time()
-        if remote_addr not in VISIT_RECORD:
-            VISIT_RECORD[remote_addr] = [ctime, ]
-            return True
-        history = VISIT_RECORD.get(remote_addr)
-        self.history = history
-
-        while history and history[-1] < ctime - 60:
-            history.pop()
-
-        if len(history) < 3:
-            history.append(ctime)
-            return True
-
-    def wait(self):
-        '''
-        用于提示还需要等多少秒才访问
-        :return:
-        '''
-        ctime = time.time()
-        return 60 - (ctime - self.history[-1])
-
-
 class AuthView(APIView):
     '''
     用于用户登录认证
     '''
     authentication_classes = []
     permission_classes = []
+    # 匿名用户登录时，一分钟只能访问3次
     throttle_classes = [VisitThrottles, ]
 
     def post(self, request, *args, **kwargs):
+        # self.dispatch()
         # 1、去request中获取ip
         # 2、访问记录
         ret = {
